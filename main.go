@@ -20,6 +20,7 @@ func main() {
 			bubbletea.Middleware(teaHandler),
 		),
 	)
+	fmt.Println("SSH server started at 127.0.0.1", serverAddress)
 	s.ListenAndServe()
 }
 
@@ -106,5 +107,5 @@ func (m model) View() string {
 	if m.choice == 1 {
 		return m.clickerView()
 	}
-	return "Wow you know how ot use ssh!\nPress c to play Clicker\n\nPress q to quit."
+	return "Wow you know how to use ssh!\nPress c to play Clicker\n\nPress q to quit."
 }

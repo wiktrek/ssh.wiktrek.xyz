@@ -1,2 +1,8 @@
-# ssh.wiktrek.xyz
-I will make it work on a real server/domain
+# SSH app
+Try ssh'ing into this app to see what its like!
+```
+ssh ssh.wiktrek.xyz -p 2332
+```
+# How to host it yourself
+1. install golang
+2. Run 'go run .' or build it using 'go build ." and run "./ssh.wiktrek.xyz"
