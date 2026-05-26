@@ -18,7 +18,7 @@ func main() {
 	_ = godotenv.Load()
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "40101"
+		port = "2332"
 	}
 	serverAddress := ":" + port
 
@@ -54,7 +54,12 @@ func workerIncomeTick() tea.Cmd {
 		return incomeTickMsg{}
 	})
 }
-
+func link(url, text string) string {
+	style := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("11")).
+		Underline(true)
+	return fmt.Sprintf("\033]8;;%s\033\\%s\033]8;;\033\\", url, style.Render(text))
+}
 func (m model) Init() tea.Cmd { return nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -116,5 +121,5 @@ func (m model) View() string {
 	if m.choice == 1 {
 		return m.clickerView()
 	}
-	return "Wow you know how to use ssh!\nPress c to play Clicker\n\nPress q to quit."
+	return "Wow you know how to use ssh!\nPress c to play Clicker\n\nPress q to quit.\n\n" + link("https://github.com/wiktrek/ssh.wiktrek.xyz", "GitHub Repo") + "\n"
 }
