@@ -1,7 +1,7 @@
 # SSH app
 Try ssh'ing into this app to see what its like!
 ```
-ssh ssh.wiktrek.xyz -p 2332
+ssh ssh.wiktrek.xyz -p 40101
 ```
 # How to host it yourself
 1. install golang

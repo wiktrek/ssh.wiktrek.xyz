@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,9 +11,17 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/bubbletea"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "40101"
+	}
+	serverAddress := ":" + port
+
 	s, _ := wish.NewServer(
 		wish.WithAddress(serverAddress),
 		wish.WithHostKeyPath(hostKeyPath),
@@ -20,7 +29,7 @@ func main() {
 			bubbletea.Middleware(teaHandler),
 		),
 	)
-	fmt.Println("SSH server started at 127.0.0.1", serverAddress)
+	fmt.Println("SSH server started at 127.0.0.1" + serverAddress)
 	s.ListenAndServe()
 }
 
