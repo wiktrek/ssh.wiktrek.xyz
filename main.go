@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"os"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +10,8 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/joho/godotenv"
+
+	"github.com/wiktrek/ssh.wiktrek.xyz/modes"
 )
 
 func main() {
@@ -37,23 +37,12 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	return model{}, []tea.ProgramOption{tea.WithAltScreen()}
 }
 
-type clicker struct {
-	money   int
-	workers int
-	err     string
-}
-type incomeTickMsg struct{}
-
 type model struct {
 	choice  int
-	clicker clicker
+	clicker modes.ClickerModel
+	snake   modes.SnakeModel
 }
 
-func workerIncomeTick() tea.Cmd {
-	return tea.Tick(workerIncomeInterval, func(time.Time) tea.Msg {
-		return incomeTickMsg{}
-	})
-}
 func link(url, text string) string {
 	style := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("11")).
@@ -64,62 +53,48 @@ func (m model) Init() tea.Cmd { return nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case incomeTickMsg:
-		if m.choice == 1 {
-			m.clicker.money += m.clicker.workers
-			return m, workerIncomeTick()
-		}
-		return m, nil
 	case tea.KeyMsg:
 		if m.choice == 0 && msg.String() == "q" {
 			return m, tea.Quit
 		}
 		if msg.String() == "c" && m.choice == 0 {
 			m.choice = 1
-			m.clicker = clicker{money: 0}
-			return m, workerIncomeTick()
+			m.clicker = modes.ClickerModel{}
+			return m, modes.IncomeTick()
 		}
-		if m.choice == 1 {
-			if msg.String() == " " {
-				m.clicker.money++
-				return m, nil
-			}
-			if msg.String() == "w" {
-				workerPrice := int(math.Round(float64(workerCost) * math.Pow(workerPriceMultiplier, float64(m.clicker.workers))))
-				if m.clicker.money >= workerPrice {
-					m.clicker.money -= workerPrice
-					m.clicker.workers++
-					m.clicker.err = ""
-					return m, nil
-				} else {
-					m.clicker.err = "Not enough money to hire a worker!"
-				}
-			}
-			if msg.String() == "q" {
-				m.choice = 0
-				m.clicker.err = ""
-				return m, nil
-			}
+		if msg.String() == "s" && m.choice == 0 {
+			m.choice = 2
+			m.snake = modes.SnakeModel{}
+			m.snake.GenerateGrid()
+			return m, modes.SnakeTick()
 		}
+	}
+	if m.choice == 1 {
+		var exit bool
+		var cmd tea.Cmd
+		m.clicker, exit, cmd = m.clicker.Update(msg)
+		if exit {
+			m.choice = 0
+		}
+		return m, cmd
+	}
+	if m.choice == 2 {
+		var exit bool
+		var cmd tea.Cmd
+		m.snake, exit, cmd = m.snake.Update(msg)
+		if exit {
+			m.choice = 0
+		}
+		return m, cmd
 	}
 	return m, nil
 }
-func (m model) clickerView() string {
-	clicker := "Clicker"
-	clicker += "\nMoney: " + fmt.Sprint(m.clicker.money)
-	clicker += "\nWorkers: " + fmt.Sprint(m.clicker.workers)
-	clicker += "\nPress space to earn money!"
-	currentPrice := int(math.Round(float64(workerCost) * math.Pow(workerPriceMultiplier, float64(m.clicker.workers))))
-	clicker += "\nPress w to hire a worker (cost: " + fmt.Sprint(currentPrice) + ")"
-	if m.clicker.err != "" {
-		clicker += "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color(errorColor)).Render(m.clicker.err)
-	}
-	clicker += "\n\n\nPress q to return to main menu!"
-	return clicker
-}
 func (m model) View() string {
 	if m.choice == 1 {
-		return m.clickerView()
+		return m.clicker.View()
 	}
-	return "Wow you know how to use ssh!\nPress c to play Clicker\n\nPress q to quit.\n\n" + link("https://github.com/wiktrek/ssh.wiktrek.xyz", "GitHub Repo") + "\n"
+	if m.choice == 2 {
+		return m.snake.View()
+	}
+	return "Wow you know how to use ssh!\nPress c to play Clicker\nPress s to play Snake!\n\nPress q to quit.\n\n" + link("https://github.com/wiktrek/ssh.wiktrek.xyz", "GitHub Repo") + "\n"
 }
