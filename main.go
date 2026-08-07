@@ -38,9 +38,11 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 }
 
 type model struct {
-	choice  int
-	clicker modes.ClickerModel
-	snake   modes.SnakeModel
+	choice      int
+	clicker     modes.ClickerModel
+	snake       modes.SnakeModel
+	dino        modes.DinoModel
+	minesweeper modes.MinesweeperModel
 }
 
 func link(url, text string) string {
@@ -68,6 +70,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.snake.GenerateGrid()
 			return m, modes.SnakeTick()
 		}
+		if msg.String() == "d" && m.choice == 0 {
+			m.choice = 3
+			m.dino = modes.NewDinoModel()
+			return m, modes.DinoTick()
+		}
+		if msg.String() == "m" && m.choice == 0 {
+			m.choice = 4
+			m.minesweeper = modes.NewMinesweeperModel()
+			return m, nil
+		}
 	}
 	if m.choice == 1 {
 		var exit bool
@@ -87,6 +99,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 	}
+	if m.choice == 3 {
+		var exit bool
+		var cmd tea.Cmd
+		m.dino, exit, cmd = m.dino.Update(msg)
+		if exit {
+			m.choice = 0
+		}
+		return m, cmd
+	}
+	if m.choice == 4 {
+		var exit bool
+		var cmd tea.Cmd
+		m.minesweeper, exit, cmd = m.minesweeper.Update(msg)
+		if exit {
+			m.choice = 0
+		}
+		return m, cmd
+	}
 	return m, nil
 }
 func (m model) View() string {
@@ -96,5 +126,11 @@ func (m model) View() string {
 	if m.choice == 2 {
 		return m.snake.View()
 	}
-	return "Wow you know how to use ssh!\nPress c to play Clicker\nPress s to play Snake!\n\nPress q to quit.\n\n" + link("https://github.com/wiktrek/ssh.wiktrek.xyz", "GitHub Repo") + "\n"
+	if m.choice == 3 {
+		return m.dino.View()
+	}
+	if m.choice == 4 {
+		return m.minesweeper.View()
+	}
+	return "Wow you know how to use ssh!\nPress c to play Clicker\nPress s to play Snake\nPress d to play Dino Run\nPress m to play Minesweeper\n\nPress q to quit.\n\n" + link("https://github.com/wiktrek/ssh.wiktrek.xyz", "GitHub Repo") + "\n"
 }
